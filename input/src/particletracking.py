@@ -25,6 +25,10 @@ def track_red_particle(video_path, start_time, output_path=None):
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     start_frame = int(start_time * fps)
     
+    # Define origin point
+    ORIGIN_X = 120
+    ORIGIN_Y = 1567
+    
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
     
     positions = []
@@ -36,7 +40,7 @@ def track_red_particle(video_path, start_time, output_path=None):
     samples_per_second = 6
     sample_interval = fps / samples_per_second
     
-    end_time = start_time + 60  # Run for one minute
+    end_time = start_time + 120  # Run for one minute
     end_frame = int(end_time * fps)
 
     while frame_count < end_frame:
@@ -71,8 +75,9 @@ def track_red_particle(video_path, start_time, output_path=None):
                 M = cv2.moments(largest_contour)
                 
                 if M["m00"] != 0:
-                    cx = int(M["m10"] / M["m00"])
-                    cy = frame_height - int(M["m01"] / M["m00"])
+                    # Calculate position relative to origin
+                    cx = int(M["m10"] / M["m00"]) - ORIGIN_X
+                    cy = ORIGIN_Y - int(M["m01"] / M["m00"])  # Subtract from origin Y to maintain upward positive
                     
                     cx_cm, cy_cm = converter.to_cm((cx, cy))
                     
@@ -80,12 +85,21 @@ def track_red_particle(video_path, start_time, output_path=None):
                     frame_numbers.append(frame_count)
                     timestamps.append(current_video_timestamp)
                     
-                    cv2.circle(frame, (cx, frame_height - cy), 5, (0, 255, 0), -1)
+                    # Draw point at actual position (need to convert back to screen coordinates)
+                    screen_x = cx + ORIGIN_X
+                    screen_y = ORIGIN_Y - cy
+                    cv2.circle(frame, (screen_x, screen_y), 5, (0, 255, 0), -1)
+                    
+                    # Draw origin point
+                    cv2.circle(frame, (ORIGIN_X, ORIGIN_Y), 3, (255, 0, 0), -1)
+                    
+                    # Draw coordinate axes
+                    cv2.line(frame, (ORIGIN_X, ORIGIN_Y), (ORIGIN_X + 50, ORIGIN_Y), (255, 0, 0), 1)  # X-axis
+                    cv2.line(frame, (ORIGIN_X, ORIGIN_Y), (ORIGIN_X, ORIGIN_Y - 50), (255, 0, 0), 1)  # Y-axis
                     
                     last_sample_time = current_time
              
-        
-        # Flip the frame horizontally
+            # Flip the frame horizontally
             frame = cv2.flip(frame, 0)
             frame = cv2.flip(frame, 1)
             if len(positions) > 1:
@@ -117,16 +131,6 @@ def track_red_particle(video_path, start_time, output_path=None):
     df['x_velocity_cm_per_s'] = dvelocity(df, 'timestamp', 'x_cm')
     df['y_velocity_cm_per_s'] = dvelocity(df, 'timestamp', 'y_cm')
     
-    
     return df
 
-# if __name__ == "__main__":
-#     video_path = r"C:\Users\manoj\Downloads\side1.mp4"
-#     try:
-#         df = track_red_particle(video_path, start_time=27.41)
-#         print("Tracking completed successfully!")
-#         print(df.head())
-#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-#         df.to_csv(f'particle_tracking_{timestamp}.csv', index=False)
-#     except Exception as e:
-#         print(f"An error occurred: {str(e)}")
+track_red_particle(r'input\src\sideveiw\usable\1.mp4', 34)

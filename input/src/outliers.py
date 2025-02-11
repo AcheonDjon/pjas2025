@@ -25,12 +25,11 @@ def remove_outliers_IQRscore(df, column_name):
     #print the percentage of data removed
     print(f"Percentage of data removed: {100 * (1 - len(df_cleaned) / len(df)):.2f}%")
     return df_cleaned
-# Example usage
-# if __name__ == "__main__":
-#     input_csv = "outputcsv\particle_tracking_1.csv"
-#     output_csv = "cleaneddata\particle_tracking_1_cleaned.csv"
-#     column_name = 'x_velocity_cm_per_s'
+
+input_csv = r"input\src\totaldata\merged_8.mp4.csv"
+output_csv = r"input\src\totaldata\merged_8.mp4.csv"
+column_name = 'y_cm'
   
-#     df = pd.read_csv(input_csv)
-#     df_cleaned = remove_outliers_IQRscore(df, column_name)  
-#     df_cleaned.to_csv(output_csv, index=False)
+df = pd.read_csv(input_csv)
+df_cleaned = remove_outliers_IQRscore(df, column_name)  
+df_cleaned.to_csv(output_csv, index=False)
